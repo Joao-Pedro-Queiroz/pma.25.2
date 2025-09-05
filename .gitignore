@@ -23,7 +23,6 @@
 hs_err_pid*
 replay_pid*
 
-pma252.*/
 volume/
 .vscode/
 .DS_Store
