@@ -28,3 +28,4 @@ volume/
 .vscode/
 .DS_Store
 api/
+config/
