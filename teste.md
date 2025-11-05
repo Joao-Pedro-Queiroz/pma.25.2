@@ -10,7 +10,11 @@ flowchart LR
   %% Dominio: Simulado
   subgraph SIM["Dominio: Simulado"]
     SS[ServSimulado];
-    MDBS[(MongoDB Simulado)];
+  end
+
+  %% Dominio: Usuario e Perfil
+  subgraph USR["Dominio: Usuario e Perfil"]
+    SU[ServUsuario];
   end
 
   %% Dominio: Modelo e LLM
@@ -26,21 +30,21 @@ flowchart LR
     MDBQ[(MongoDB Questoes)];
   end
 
-  %% Fluxo principal
+  %% Fluxo principal - Criar Simulado Adaptativo
   SITE -->|1. Gerar simulado adaptativo| SS;
-  SITE -. "2. Buscar simulado recente (opcional)" .-> SS;
-  SS -. "3. Se existir, retorna existente" .-> SITE;
 
-  SS -->|4. Envia ID da conta e perfil| SM;
+  SS -->|2. Envia email ao ServUsuario| SU;
+  SU -->|3. Retorna informacoes da conta| SS;
+
+  SS -->|4. Envia ID da conta para modelo| SM;
   SM -->|5. Salva ou atualiza plano do aluno| PLAN;
-
   SM -->|6. Envia prompt com contexto| LLM;
   LLM -->|7. Retorna questoes recomendadas| SM;
   SM -->|8. Retorna questoes ao ServSimulado| SS;
 
-  SS -->|9. Enviar questoes para armazenamento| SQ;
-  SQ -->|10. Salvar questoes| MDBQ;
-  SS -->|11. Salva simulado - metadados e vinculo| MDBS;
+  SS -->|9. Solicita salvar questoes| SQ;
+  SQ -->|10. Persistir questoes| MDBQ;
+  SQ -->|11. Retorna questoes salvas| SS;
 
   SS -->|12. Retorna simulado e questoes| SITE;
 ```
