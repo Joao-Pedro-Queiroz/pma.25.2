@@ -62,10 +62,6 @@ flowchart LR
     %% Perfil: apenas via ServUsuário / ServSimulado
     ServUsuario -->|Enviar Perfil| ServPerfil
 
-    %% Buscar informações do usuário
-    ServSimulado -->|Envia email| ServUsuario
-    ServUsuario -->|Retorna informações| ServSimulado
-
     %% Geração do simulado
     Site -->|Gerar simulado adaptativo| ServSimulado
     ServSimulado -->|Envia ID conta| ServModelo
@@ -83,6 +79,10 @@ flowchart LR
 
     %% (Opcional) Atualizações de perfil após finalização
     ServSimulado -->|Enviar Perfil| ServPerfil
+
+    %% Buscar informações do usuário
+    ServSimulado -->|Envia email| ServUsuario
+    ServUsuario -->|Retorna informações| ServSimulado
 
     %% Estilos
     classDef store fill:#fff9,stroke:#9370db;
