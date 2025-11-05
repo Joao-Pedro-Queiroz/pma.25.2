@@ -2,89 +2,53 @@
 
 ```mermaid
 flowchart LR
-    %% Direção esquerda → direita
-    Actor([Actor])
-    Site((Site))
+  %% Diagrama de Interação – MVP: Criar Simulado Adaptativo
+  %% flowchart LR
 
-    %% === Domínio: Usuário & Perfil ===
-    subgraph DomUsuarioPerfil["Domínio: Usuário & Perfil"]
-      direction LR
-      ServUsuario[ServUsuário]
-      MDB_Usuario[(MongoDB Usuário)]
-      ServPerfil[ServPerfil]
-      MDB_Perfil[(MongoDB Perfil)]
+  subgraph FE["Frontend"]
+    A[Actor] -->|Acessa| SITE[Site / App]
+  end
 
-      %% Regras do domínio
-      ServUsuario -->|Buscar conta| MDB_Usuario
-      ServUsuario -->|Salvar/validar conta| MDB_Usuario
-      ServPerfil -->|Salvar Perfil| MDB_Perfil
-    end
+  %% ---- Domínio: Simulado ----
+  subgraph SIM["Domínio: Simulado"]
+    SS[ServSimulado]
+    MDBS[(MongoDB Simulado)]
+  end
 
-    %% === Domínio: Simulado ===
-    subgraph DomSimulado["Domínio: Simulado"]
-      direction LR
-      ServSimulado[ServSimulado]
-      MDB_Simulado[(MongoDB Simulado)]
-      ServSimulado -->|Salva simulado| MDB_Simulado
-      ServSimulado -->|Busca Simulado Recente| MDB_Simulado
-      ServSimulado -->|Apaga Simulado| MDB_Simulado
-    end
+  %% ---- Domínio: Modelo & LLM ----
+  subgraph MOD["Domínio: Modelo & LLM"]
+    SM[ServModelo]
+    PLAN[(MongoDB Plano do Aluno)]
+    LLM[Serviço de Terceiro da LLM]
+  end
 
-    %% === Domínio: Modelo & LLM ===
-    subgraph DomModelo["Domínio: Modelo & LLM"]
-      direction LR
-      ServModelo[ServModelo]
-      MDB_Plano[(MongoDB Plano do Aluno)]
-      LLM[Serviço de Terceiro da LLM]
+  %% ---- Domínio: Questões ----
+  subgraph QST["Domínio: Questões"]
+    SQ[ServQuestoes]
+    MDBQ[(MongoDB Questões)]
+  end
 
-      ServModelo -->|Envia Prompt| LLM
-      LLM -->|Retorna Questões| ServModelo
-      ServModelo -->|Salva plano do aluno| MDB_Plano
-    end
+  %% ------ Fluxo principal de criação do Simulado Adaptativo ------
+  SITE -->|1. Gerar simulado adaptativo (req)| SS
 
-    %% === Domínio: Questões ===
-    subgraph DomQuestoes["Domínio: Questões"]
-      direction LR
-      ServQuestoes[ServQuestoes]
-      MDB_Questoes[(MongoDB Questões)]
-      ServQuestoes -->|Salvar Questões| MDB_Questoes
-    end
+  %% (opcional) checar simulado recente para evitar duplicidade
+  SITE -. "Buscar simulado recente (opcional)" .-> SS
+  SS -. "Se existir, retorna existente" .-> SITE
 
-    %% === Fluxos entre domínios ===
-    Actor -->|Acessa| Site
+  %% enviar dados do aluno ao motor adaptativo
+  SS -->|2. Envia ID da conta & Perfil| SM
+  SM -->|3. Salva/atualiza plano do aluno| PLAN
 
-    %% Autenticação: Site <-> ServUsuário
-    Site -->|Cadastrar/logar conta| ServUsuario
-    Site -->|Buscar informações da conta| ServUsuario
-    ServUsuario -->|Token JWT| Site
-    ServUsuario -->|Informações da conta| Site
+  %% geração adaptativa via LLM
+  SM -->|4. Envia Prompt com contexto do aluno| LLM
+  LLM -->|5. Retorna questões recomendadas| SM
+  SM -->|6. Retorna questões ao ServSimulado| SS
 
-    %% Perfil: apenas via ServUsuário / ServSimulado
-    ServUsuario -->|Enviar Perfil| ServPerfil
+  %% persistência e publicação do simulado
+  SS -->|7. Enviar Questões para armazenamento| SQ
+  SQ -->|8. Salvar Questões| MDBQ
+  SS -->|9. Salva simulado (metadados, vínculo)| MDBS
 
-    %% Geração do simulado
-    Site -->|Gerar simulado adaptativo| ServSimulado
-    ServSimulado -->|Envia ID conta| ServModelo
-    ServModelo -->|Retorna Questões| ServSimulado
-
-    %% Encaminhar questões para serviço de questões
-    ServSimulado -->|Enviar Questões| ServQuestoes
-
-    %% Recuperação / Finalização (retornam apenas o simulado)
-    Site -->|Buscar Simulado Recente| ServSimulado
-    Site -->|Finalizar Simulado| ServSimulado
-    Site -->|Apagar simulado| ServSimulado
-    ServSimulado -->|Retorna Simulado| Site
-    ServSimulado -->|Retorna Simulado e questões do simulado| Site
-
-    %% (Opcional) Atualizações de perfil após finalização
-    ServSimulado -->|Enviar Perfil| ServPerfil
-
-    %% Buscar informações do usuário
-    ServSimulado -->|Envia email| ServUsuario
-    ServUsuario -->|Retorna informações| ServSimulado
-
-    %% Estilos
-    classDef store fill:#fff9,stroke:#9370db;
-    class MDB_Usuario,MDB_Perfil,MDB_Simulado,MDB_Plano,MDB_Questoes store;
+  %% resposta ao frontend
+  SS -->|10. Retorna Simulado + Questões| SITE
 ```
