@@ -56,7 +56,6 @@ flowchart LR
     %% Autenticação: Site <-> ServUsuário
     Site -->|Cadastrar/logar conta| ServUsuario
     Site -->|Buscar informações da conta| ServUsuario
-    ServUsuario -->|Informações da conta| Site
 
     %% Perfil: apenas via ServUsuário / ServSimulado
     ServUsuario -->|Enviar Perfil| ServPerfil
